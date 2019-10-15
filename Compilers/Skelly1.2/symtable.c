@@ -1,9 +1,10 @@
-
 #include <stdlib.h>
 #include <string.h>
 #include "symtable.h"
-
 #define TABLESIZE 97
+
+// Global variable gets rid of seg fault.
+Symbol* head = 0;
 
 // Table hash function
 // - just adds up all chars in the string and then 
@@ -36,28 +37,60 @@ Symbol** newSymbolTable()
 // - name is the symbol name string (must strdup() it in here to store)
 // - scopeLevel is the scoping level of the symbol (0 is global)
 // - type is its data type 
-// - this function must hash the symbol name to find the correct
-//   table entry to put it on; each table entry is a pointer to a linked
-//   list of symbols that hash to that index; symbols must be added to
-//   the head of the list
-// - this function must allocate a new Symbol structure, it must 
-//   strdup() the name to save its own copy, and must set all structure
-//   fields appropiately
-// - return 0 on success, other on failure
 int addSymbol(Symbol** table, char* name, int scopeLevel, DataType type)
 {
-   // your implementation should be less than 10 lines long -- keep it simple!
+	
+	if(table != NULL){
+		// This is supposed to point to the head of the linked list
+		Symbol*  sNode;
+
+		// - this function must hash the symbol name to find the correct
+		//   table entry to put it on; each table entry is a pointer to a linked
+		//   list of symbols that hash to that index; symbols must be added to
+		//   the head of the list
+		int hashbrowns = hash(name);
+		
+		// - this function must allocate a new Symbol structure, it must 
+		//   strdup() the name to save its own copy, and must set all structure
+		//   fields appropiately
+		sNode = (Symbol*) malloc(sizeof(Symbol) * TABLESIZE);
+		sNode -> name = (char*) malloc(sizeof(char)*128);
+		sNode -> name = strdup(name);
+		sNode -> type = type;
+		sNode -> scopeLevel = scopeLevel;
+
+		// Moves sNode to point to the next node.
+		sNode -> next = head;
+		head = sNode;
+		
+		// jump to the next node
+		table[hashbrowns] = sNode;
+		// - return 0 on success, other on failure
+		return 0;
+		}
+	return -1;
 }
 
 // Lookup a symbol name to see if it is in the symbol table
 // - returns a pointer to the symbol record, or NULL if not found
 // - it should return the first symbol record that exists with the
 //   given name; there is no need to look further once you find one
-// - pseudocode: hash the name to get table index, then look through
-//   linked list to see if the name exists as a symbol
+
 Symbol* findSymbol(Symbol** table, char* name)
 {
-   // this function should also have a pretty simple implementation
+	// - pseudocode: hash the name to get table index, then look through
+	//   linked list to see if the name exists as a symbol
+   int hashbrowns = hash(name);
+   Symbol* cursor = head;
+   
+	while(cursor != NULL){
+		if(cursor== table[hashbrowns]){
+			return table[hashbrowns];
+			break;
+		}
+	cursor = cursor -> next;
+	}
+   return NULL;
 }
 
 // Iterator over entire symbol table
