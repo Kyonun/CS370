@@ -3,9 +3,6 @@
 #include "symtable.h"
 #define TABLESIZE 97
 
-// Global variable gets rid of seg fault.
-Symbol* head = 0;
-
 // Table hash function
 // - just adds up all chars in the string and then 
 //   mods by table size to get 0 to (size-1) index value
@@ -37,6 +34,8 @@ Symbol** newSymbolTable()
 // - name is the symbol name string (must strdup() it in here to store)
 // - scopeLevel is the scoping level of the symbol (0 is global)
 // - type is its data type 
+// varDecl is where you'll probably want to call addSymbol - $1 is the datatype.
+// $2 is your variable name.
 int addSymbol(Symbol** table, char* name, int scopeLevel, DataType type)
 {
 	
@@ -53,15 +52,13 @@ int addSymbol(Symbol** table, char* name, int scopeLevel, DataType type)
 		// - this function must allocate a new Symbol structure, it must 
 		//   strdup() the name to save its own copy, and must set all structure
 		//   fields appropiately
-		sNode = (Symbol*) malloc(sizeof(Symbol) * TABLESIZE);
-		sNode -> name = (char*) malloc(sizeof(char)*128);
+		sNode = (Symbol*) malloc(sizeof(Symbol));
 		sNode -> name = strdup(name);
 		sNode -> type = type;
 		sNode -> scopeLevel = scopeLevel;
 
 		// Moves sNode to point to the next node.
-		sNode -> next = head;
-		head = sNode;
+		sNode -> next = table[hasbrowns];
 		
 		// jump to the next node
 		table[hashbrowns] = sNode;
@@ -75,18 +72,17 @@ int addSymbol(Symbol** table, char* name, int scopeLevel, DataType type)
 // - returns a pointer to the symbol record, or NULL if not found
 // - it should return the first symbol record that exists with the
 //   given name; there is no need to look further once you find one
-
+// You'll use this in Assignment in your parser. Read ze rules for assignment.
 Symbol* findSymbol(Symbol** table, char* name)
 {
-	// - pseudocode: hash the name to get table index, then look through
-	//   linked list to see if the name exists as a symbol
+	// - pseudocode: hash the name to get table index (done)
+	// -  then look through linked list to see if the name exists as a symbol (??)
    int hashbrowns = hash(name);
    Symbol* cursor = head;
    
 	while(cursor != NULL){
 		if(cursor== table[hashbrowns]){
-			return table[hashbrowns];
-			break;
+			return table[hashbrowns];x
 		}
 	cursor = cursor -> next;
 	}
@@ -99,6 +95,7 @@ Symbol* findSymbol(Symbol** table, char* name)
 // - caller then calls this function until it returns NULL, meaning end 
 //   of all symbols; each return value is a pointer to a symbol in the table
 // - parameter scopeLevel is not currently used
+// Used in declarations
 Symbol* iterSymbolTable(Symbol** table, int scopeLevel, SymbolTableIter* iter)
 {
    Symbol* cur;
@@ -120,4 +117,3 @@ Symbol* iterSymbolTable(Symbol** table, int scopeLevel, SymbolTableIter* iter)
    iter->lastsym = cur;
    return cur;
 }
-

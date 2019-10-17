@@ -17,8 +17,9 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
-
+#include "symtable.h"
 /***** Function Prototypes from Lex *****/
+Symbol** symBun; 
 int yyerror(char *s);
 int yylex(void);
 int addString(char* stringy);
@@ -162,10 +163,11 @@ stringArrayType strungout = {0,0};
 			sprintf(code, "\tmovl\t$%d, %%edx\n", $1);
 			$$ = code;
 		}
-	| ID // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	| ID // This is where the x's or whatever go from the equation. Another move?
 		{	
 			char *code = (char*)malloc(sizeof(char)*1000);
-			sprintf(code, "??");
+			sprintf(code, "\tmovl\t$%s, %%eax\n",$1);
+			$$ = code;
 		}
 	declarations: /** empty **/
 		{	
@@ -177,9 +179,13 @@ stringArrayType strungout = {0,0};
 
 	varDecl: KWINT ID
 		{
+			addSymbol(symBun, $2, 0, T_INT);
+			char *code = (char*)malloc(1000);
+			sprintf(code, "\t
 		}
 		| KWCHAR ID
 		{		
+			addSymbol(symBun, $2, 0, T_STRING);
 		}
 
 	parameters:
@@ -188,9 +194,11 @@ stringArrayType strungout = {0,0};
 		}
 		| varDecl
 		{
+			// addSymTable?
 		}
 		| varDecl COMMA parameters
 		{
+			// addSymTable?
 		}
 
 		;
@@ -217,11 +225,12 @@ void DLines(){
 	}
 	
 
-
 /***** Functions *****/
 extern FILE *yyin; // From Lex
 
 int main(int argc, char **argv){
+
+	
    		if (argc==2) {
      			 yyin = fopen(argv[1],"r");
       				if (!yyin) {
