@@ -58,7 +58,7 @@ int addSymbol(Symbol** table, char* name, int scopeLevel, DataType type)
 		sNode -> scopeLevel = scopeLevel;
 
 		// Moves sNode to point to the next node.
-		sNode -> next = table[hasbrowns];
+		sNode -> next = table[hashbrowns];
 		
 		// jump to the next node
 		table[hashbrowns] = sNode;
@@ -76,13 +76,13 @@ int addSymbol(Symbol** table, char* name, int scopeLevel, DataType type)
 Symbol* findSymbol(Symbol** table, char* name)
 {
 	// - pseudocode: hash the name to get table index (done)
-	// -  then look through linked list to see if the name exists as a symbol (??)
+	// -  then look through linked list to see if the name exists as a symbol (done)
    int hashbrowns = hash(name);
-   Symbol* cursor = head;
+   Symbol* cursor = table[hashbrowns];
    
 	while(cursor != NULL){
 		if(cursor== table[hashbrowns]){
-			return table[hashbrowns];x
+			return cursor;
 		}
 	cursor = cursor -> next;
 	}

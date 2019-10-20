@@ -35,12 +35,12 @@ yystype yylval;
 [ \t\n\r]* { /* Skip Whitespace */}
 
 int 			{
-			printf("INT: (%s)\n", yytext);
+			// printf("INT: (%s)\n", yytext);
 			yylval.ival = yytext[0];
 			return(KWINT);
 			}
 char\*		{
-			printf("CHAR*: (%s)\n", yytext);
+			// printf("CHAR*: (%s)\n", yytext);
 			yylval.ival = yytext[0];
 			return(KWCHAR);
 			}		
@@ -99,7 +99,7 @@ char\*		{
 			return(PLUS);
 			}
 \=			{
-			printf("EQUALS: (%s)\n", yytext);
+			// printf("EQUALS: (%s)\n", yytext);
 			yylval.ival = yytext[0];
 			return(EQUALS);
 			} 

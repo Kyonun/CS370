@@ -20,10 +20,14 @@
 #include "symtable.h"
 /***** Function Prototypes from Lex *****/
 Symbol** symBun; 
+Symbol* symHolder;
+Symbol* finder;
+SymbolTableIter itr;
 int yyerror(char *s);
 int yylex(void);
 int addString(char* stringy);
 void DLines();
+void symFinder();
 int argNum = 0;
 char *argRegStr[] = {"%rdi","%rsi","%rdx","%rcx","r8","r9"};	
 
@@ -55,10 +59,12 @@ stringArrayType strungout = {0,0};
 	// !!!!!!!!!!!!!!!!!!!!!!
 	Prog: declarations functions
 		{
+		printf("\t.data\n");
+		symFinder();
 		printf("\t.section\t.rodata\n");
 		// printf("\t.text\n%s", $1); <-- For OSX
 		DLines();
-		printf("\t.text\n%s", $1);
+		printf("\t.text\n%s", $2);
 		}
 	functions:/**empty: Return empty**/
 		{
@@ -75,7 +81,7 @@ stringArrayType strungout = {0,0};
 	function: ID LPAREN parameters RPAREN RBRACE statements LBRACE
 		  {
 			char *coder = (char*) malloc(sizeof(char)*1000);
-			sprintf(coder,"\t.globl\t%s\n\t.type\t%s,@function\n%s:\n\tpushq\t%%rbp\nmovq\t%%rsp, %%rbp\n%s\n\tpopq\t%%rbp\n\tret\n" ,$1, $1, $1, $5);
+			sprintf(coder,"\t.globl\t%s\n\t.type\t%s,@function\n%s:\n\tpushq\t%%rbp\nmovq\t%%rsp, %%rbp\n%s\n\tpopq\t%%rbp\n\tret\n" ,$1, $1, $1, $6);
 			// Commented Out: Version that works on OSX
 			// sprintf(coder,"\t.globl\t%s\n%s:\n\tpushq\t%%rbp\n\tmovq\t%%rsp, %%rbp\n%s\n\tpopq\t%%rbp\n\tret\n" , $1, $1, $5);
 			$$ = coder;
@@ -90,7 +96,7 @@ stringArrayType strungout = {0,0};
 		{
 			char *stmtcat = (char*) malloc(sizeof(char)*1000);
 			strcpy(stmtcat,$1);
-			strcat(stmtcat,$2);
+			strcat(stmtcat,$3);
 			$$ = stmtcat;
 		}
 
@@ -102,7 +108,8 @@ stringArrayType strungout = {0,0};
 			$$ = $1;
 		}
 		| assignment
-		{		
+		{
+			$$ = $1;		
 		}
 
 	funcall: ID LPAREN arguments RPAREN
@@ -112,9 +119,13 @@ stringArrayType strungout = {0,0};
 		argNum = 0;
 		$$ = code;
 		}
-	// !!!!!!!!!!!
+	
 	assignment: ID EQUALS expression
-		{		
+		{	
+			finder = findSymbol(symBun, $1);
+			char *code = (char*)malloc(sizeof(char)*1000);
+			sprintf(code, "%s\tmovl\t%%eax, %s\n\tmovl\t%s, %%eax\n\tmovl\t%%eax, %%esi\t\n", $3, finder -> name, finder -> name);
+			$$ = code;
 		}
 	
 	arguments: argument COMMA arguments
@@ -163,10 +174,10 @@ stringArrayType strungout = {0,0};
 			sprintf(code, "\tmovl\t$%d, %%edx\n", $1);
 			$$ = code;
 		}
-	| ID // This is where the x's or whatever go from the equation. Another move?
+	| ID //x and y and stuff
 		{	
 			char *code = (char*)malloc(sizeof(char)*1000);
-			sprintf(code, "\tmovl\t$%s, %%eax\n",$1);
+			sprintf(code, "\tmovl\t%s, %%edx\n",$1);
 			$$ = code;
 		}
 	declarations: /** empty **/
@@ -174,18 +185,17 @@ stringArrayType strungout = {0,0};
 			$$ = "";
 		}
 		| varDecl SEMICOLON declarations
-		{		
+		{	
+			$$="";
 		}
 
 	varDecl: KWINT ID
 		{
-			addSymbol(symBun, $2, 0, T_INT);
-			char *code = (char*)malloc(1000);
-			sprintf(code, "\t
+			addSymbol(symBun, $2, 0, $1);
 		}
 		| KWCHAR ID
 		{		
-			addSymbol(symBun, $2, 0, T_STRING);
+			addSymbol(symBun, $2, 0, $1);
 		}
 
 	parameters:
@@ -194,11 +204,11 @@ stringArrayType strungout = {0,0};
 		}
 		| varDecl
 		{
-			// addSymTable?
+			$$ = "";
 		}
 		| varDecl COMMA parameters
 		{
-			// addSymTable?
+			$$="";
 		}
 
 		;
@@ -223,14 +233,27 @@ void DLines(){
 		newind++;
 		}
 	}
+void symFinder(){
+
+	
+	// while(free){ <-- OSX won't accept true for some reason, it suggested free.
+	while(true){
+		symHolder = iterSymbolTable(symBun, 0, &itr);
+		if(symHolder == NULL){
+			break;
+		}
+	
+		printf("%s: \t.word 0\n", symHolder ->name);
+}
+}
 	
 
 /***** Functions *****/
 extern FILE *yyin; // From Lex
 
 int main(int argc, char **argv){
-
-	
+	symBun = newSymbolTable();
+	itr.index = -1;
    		if (argc==2) {
      			 yyin = fopen(argv[1],"r");
       				if (!yyin) {
